@@ -1,0 +1,30 @@
+---
+name: Rubocop
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  rubocop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Change
+        run: |
+          date >> README.md
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      - name: Push Back
+        run: |
+            echo ${GITHUB_REF}
+            modified=$(git status | grep modified | wc -l)
+            if [ $modified -gt 0 ];
+            then
+              git config --local user.email "$(git log --format='%ae' HEAD^!)"
+              git config --local user.name "$(git log --format='%an' HEAD^!)"
+              git add --all;
+              git commit -m "Committing files modified by the workflow";
+              git switch ${GITHUB_REF}
+              git push;
+            fi
